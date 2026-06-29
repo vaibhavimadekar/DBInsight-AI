@@ -191,35 +191,8 @@ Execute SQL
 
 ---
 
-# 📸 Screenshots
 
-## Login
 
-> Add Screenshot Here
-
----
-
-## Dashboard
-
-> Add Screenshot Here
-
----
-
-## Add Connection
-
-> Add Screenshot Here
-
----
-
-## SQL Workspace
-
-> Add Screenshot Here
-
----
-
-## Query Results
-
-> Add Screenshot Here
 
 ---
 
