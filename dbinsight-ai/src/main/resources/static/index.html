@@ -1,0 +1,1448 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DBInsight — SQL Intelligence Platform</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+          --bg: #0d0f14;
+          --bg-card: #13161e;
+          --bg-card2: #181b24;
+          --border: rgba(255,255,255,0.07);
+          --border-strong: rgba(255,255,255,0.13);
+          --text: #e8eaf0;
+          --text-muted: #6b7280;
+          --text-dim: #9ca3af;
+          --accent: #6366f1;
+          --accent-light: rgba(99,102,241,0.12);
+          --accent-border: rgba(99,102,241,0.35);
+          --success: #10b981;
+          --success-bg: rgba(16,185,129,0.1);
+          --warning: #f59e0b;
+          --warning-bg: rgba(245,158,11,0.1);
+          --danger: #ef4444;
+          --danger-bg: rgba(239,68,68,0.1);
+          --font: 'Inter', sans-serif;
+          --mono: 'JetBrains Mono', monospace;
+          --radius: 10px;
+          --radius-sm: 6px;
+        }
+
+        body {
+          background: var(--bg);
+          color: var(--text);
+          font-family: var(--font);
+          font-size: 14px;
+          line-height: 1.6;
+          min-height: 100vh;
+        }
+
+        /* ─── AUTH PAGES ─── */
+        .auth-wrap {
+          min-height: 100vh;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          padding: 24px;
+          background: var(--bg);
+        }
+        .auth-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
+          border-radius: 16px;
+          padding: 40px;
+          width: 100%;
+          max-width: 400px;
+        }
+        .auth-logo {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          margin-bottom: 32px;
+        }
+        .auth-logo-icon {
+          width: 36px;
+          height: 36px;
+          background: var(--accent);
+          border-radius: 8px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          font-size: 18px;
+        }
+        .auth-logo span { font-size: 20px; font-weight: 600; letter-spacing: -0.3px; }
+        .auth-title { font-size: 22px; font-weight: 600; margin-bottom: 6px; letter-spacing: -0.3px; }
+        .auth-sub { color: var(--text-muted); margin-bottom: 28px; font-size: 13px; }
+        .form-group { margin-bottom: 16px; }
+        .form-label { display: block; font-size: 12px; font-weight: 500; color: var(--text-dim); margin-bottom: 6px; letter-spacing: 0.3px; text-transform: uppercase; }
+        .form-input {
+          width: 100%;
+          background: var(--bg);
+          border: 1px solid var(--border-strong);
+          border-radius: var(--radius-sm);
+          color: var(--text);
+          font-family: var(--font);
+          font-size: 14px;
+          padding: 10px 14px;
+          outline: none;
+          transition: border-color 0.15s;
+        }
+        .form-input:focus { border-color: var(--accent); }
+        .form-input::placeholder { color: var(--text-muted); }
+        .btn {
+          display: inline-flex;
+          align-items: center;
+          justify-content: center;
+          gap: 7px;
+          font-family: var(--font);
+          font-size: 14px;
+          font-weight: 500;
+          border: none;
+          border-radius: var(--radius-sm);
+          cursor: pointer;
+          transition: opacity 0.15s, transform 0.1s;
+          text-decoration: none;
+        }
+        .btn:active { transform: scale(0.98); }
+        .btn-primary { background: var(--accent); color: #fff; padding: 11px 20px; width: 100%; }
+        .btn-primary:hover { opacity: 0.88; }
+        .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-ghost { background: transparent; color: var(--text-dim); padding: 8px 14px; border: 1px solid var(--border-strong); }
+        .btn-ghost:hover { background: var(--bg-card2); color: var(--text); }
+        .btn-danger-ghost { background: transparent; color: var(--danger); padding: 7px 12px; border: 1px solid rgba(239,68,68,0.3); font-size: 13px; }
+        .btn-danger-ghost:hover { background: var(--danger-bg); }
+        .btn-sm { padding: 7px 14px; font-size: 13px; }
+        .auth-switch { text-align: center; margin-top: 20px; color: var(--text-muted); font-size: 13px; }
+        .auth-switch a { color: var(--accent); cursor: pointer; text-decoration: none; }
+        .auth-switch a:hover { text-decoration: underline; }
+        .alert { border-radius: var(--radius-sm); padding: 10px 14px; font-size: 13px; margin-bottom: 16px; }
+        .alert-danger { background: var(--danger-bg); color: #fca5a5; border: 1px solid rgba(239,68,68,0.2); }
+        .alert-success { background: var(--success-bg); color: #6ee7b7; border: 1px solid rgba(16,185,129,0.2); }
+
+        /* ─── APP SHELL ─── */
+        .app { display: flex; min-height: 100vh; }
+        .sidebar {
+          width: 220px;
+          flex-shrink: 0;
+          background: var(--bg-card);
+          border-right: 1px solid var(--border);
+          display: flex;
+          flex-direction: column;
+          padding: 20px 0;
+          position: fixed;
+          top: 0; left: 0; bottom: 0;
+          z-index: 100;
+        }
+        .sidebar-logo {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 0 18px 24px;
+        }
+        .sidebar-logo-icon {
+          width: 28px; height: 28px;
+          background: var(--accent);
+          border-radius: 6px;
+          display: flex; align-items: center; justify-content: center;
+          font-size: 14px; flex-shrink: 0;
+        }
+        .sidebar-logo span { font-size: 16px; font-weight: 600; letter-spacing: -0.2px; }
+        .nav-section-label {
+          font-size: 10px;
+          font-weight: 600;
+          letter-spacing: 0.8px;
+          text-transform: uppercase;
+          color: var(--text-muted);
+          padding: 0 18px 8px;
+          margin-top: 4px;
+        }
+        .nav-item {
+          display: flex;
+          align-items: center;
+          gap: 9px;
+          padding: 9px 18px;
+          color: var(--text-muted);
+          cursor: pointer;
+          transition: all 0.12s;
+          font-size: 13.5px;
+          border-radius: 0;
+          margin: 1px 8px;
+          border-radius: 7px;
+          text-decoration: none;
+        }
+        .nav-item:hover { background: var(--bg-card2); color: var(--text); }
+        .nav-item.active { background: var(--accent-light); color: #a5b4fc; border: 1px solid var(--accent-border); }
+        .nav-icon { font-size: 16px; width: 18px; text-align: center; }
+        .sidebar-bottom {
+          margin-top: auto;
+          padding: 16px;
+          border-top: 1px solid var(--border);
+        }
+        .user-chip {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          padding: 8px 10px;
+          border-radius: 8px;
+          background: var(--bg-card2);
+        }
+        .user-avatar {
+          width: 30px; height: 30px;
+          border-radius: 50%;
+          background: var(--accent);
+          display: flex; align-items: center; justify-content: center;
+          font-size: 12px; font-weight: 600; flex-shrink: 0;
+        }
+        .user-name { font-size: 13px; font-weight: 500; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .logout-btn { background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 15px; padding: 2px; }
+        .logout-btn:hover { color: var(--danger); }
+
+        .main { margin-left: 220px; flex: 1; padding: 32px; min-height: 100vh; }
+        .page { display: none; }
+        .page.active { display: block; }
+
+        /* ─── TYPOGRAPHY & LAYOUT ─── */
+        .page-header { margin-bottom: 28px; }
+        .page-title { font-size: 22px; font-weight: 600; letter-spacing: -0.4px; margin-bottom: 4px; }
+        .page-desc { color: var(--text-muted); font-size: 13px; }
+        .card {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 20px;
+        }
+        .card + .card { margin-top: 16px; }
+
+        /* ─── DASHBOARD ─── */
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 24px; }
+        .stat-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 18px 20px;
+        }
+        .stat-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: var(--text-muted); margin-bottom: 8px; }
+        .stat-value { font-size: 28px; font-weight: 600; letter-spacing: -0.5px; line-height: 1; margin-bottom: 4px; }
+        .stat-sub { font-size: 12px; color: var(--text-muted); }
+        .stat-accent { color: var(--accent); }
+        .stat-success { color: var(--success); }
+        .stat-warning { color: var(--warning); }
+        .stat-danger { color: var(--danger); }
+
+        /* ─── ANALYZER ─── */
+        .analyzer-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .sql-editor-wrap { position: relative; }
+        .sql-editor {
+          width: 100%;
+          min-height: 200px;
+          background: #0a0c12;
+          border: 1px solid var(--border-strong);
+          border-radius: var(--radius-sm);
+          color: #a5f3fc;
+          font-family: var(--mono);
+          font-size: 13px;
+          line-height: 1.7;
+          padding: 16px;
+          resize: vertical;
+          outline: none;
+          transition: border-color 0.15s;
+        }
+        .sql-editor:focus { border-color: var(--accent); }
+        .section-title { font-size: 13px; font-weight: 600; color: var(--text-dim); letter-spacing: 0.3px; margin-bottom: 12px; text-transform: uppercase; font-size: 11px; }
+        .score-ring-wrap { display: flex; align-items: center; justify-content: center; padding: 20px 0; }
+        .score-ring { position: relative; width: 110px; height: 110px; }
+        .score-ring svg { transform: rotate(-90deg); }
+        .score-ring-val { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+        .score-ring-num { font-size: 28px; font-weight: 700; line-height: 1; }
+        .score-ring-label { font-size: 10px; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 20px; padding: 3px 10px; font-size: 11px; font-weight: 600; }
+        .badge-success { background: var(--success-bg); color: var(--success); }
+        .badge-warning { background: var(--warning-bg); color: var(--warning); }
+        .badge-danger { background: var(--danger-bg); color: var(--danger); }
+        .badge-neutral { background: rgba(255,255,255,0.07); color: var(--text-dim); }
+        .badge-accent { background: var(--accent-light); color: #a5b4fc; }
+        .issue-list { list-style: none; }
+        .issue-item {
+          display: flex; align-items: flex-start; gap: 10px;
+          padding: 10px 0;
+          border-bottom: 1px solid var(--border);
+        }
+        .issue-item:last-child { border-bottom: none; }
+        .issue-dot { width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+        .issue-text { font-size: 13px; line-height: 1.5; }
+        .suggestion-text { font-size: 12px; color: var(--text-muted); margin-top: 2px; }
+        .result-panel { min-height: 240px; }
+        .empty-state { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 200px; color: var(--text-muted); gap: 8px; text-align: center; }
+        .empty-icon { font-size: 32px; opacity: 0.4; }
+        .empty-title { font-size: 14px; font-weight: 500; color: var(--text-dim); }
+        .empty-sub { font-size: 12px; }
+        .action-row { display: flex; gap: 10px; margin-top: 14px; flex-wrap: wrap; }
+
+        /* ─── AI OPTIMIZE ─── */
+        .optimize-result {
+          background: #0a0c12;
+          border: 1px solid var(--border-strong);
+          border-radius: var(--radius-sm);
+          font-family: var(--mono);
+          font-size: 13px;
+          line-height: 1.7;
+          color: #a5f3fc;
+          padding: 16px;
+          white-space: pre-wrap;
+          word-break: break-word;
+          min-height: 80px;
+        }
+        .explanation-box {
+          background: var(--accent-light);
+          border: 1px solid var(--accent-border);
+          border-radius: var(--radius-sm);
+          padding: 14px 16px;
+          font-size: 13px;
+          line-height: 1.6;
+          color: #c7d2fe;
+        }
+
+        /* ─── EXECUTE SQL ─── */
+        .execute-result {
+          background: #0a0c12;
+          border: 1px solid var(--border-strong);
+          border-radius: var(--radius-sm);
+          padding: 14px;
+          overflow-x: auto;
+        }
+        .execute-table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12px; }
+        .execute-table th {
+          text-align: left;
+          padding: 6px 12px;
+          border-bottom: 1px solid var(--border-strong);
+          color: var(--text-dim);
+          font-size: 11px;
+          letter-spacing: 0.4px;
+          text-transform: uppercase;
+          white-space: nowrap;
+        }
+        .execute-table td {
+          padding: 6px 12px;
+          border-bottom: 1px solid var(--border);
+          color: #a5f3fc;
+          white-space: nowrap;
+        }
+        .execute-table tr:last-child td { border-bottom: none; }
+        .execute-table tr:hover td { background: var(--bg-card2); }
+        .conn-banner {
+          display: flex;
+          align-items: center;
+          gap: 10px;
+          background: var(--accent-light);
+          border: 1px solid var(--accent-border);
+          border-radius: var(--radius-sm);
+          padding: 10px 14px;
+          margin-bottom: 16px;
+          font-size: 13px;
+          color: #a5b4fc;
+        }
+        .conn-banner-dot {
+          width: 8px; height: 8px;
+          border-radius: 50%;
+          background: var(--success);
+          flex-shrink: 0;
+        }
+
+        /* ─── CONNECTIONS ─── */
+        .conn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; }
+        .conn-card {
+          background: var(--bg-card);
+          border: 1px solid var(--border);
+          border-radius: var(--radius);
+          padding: 18px;
+          transition: border-color 0.15s;
+        }
+        .conn-card:hover { border-color: var(--border-strong); }
+        .conn-card-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px; }
+        .conn-name { font-size: 15px; font-weight: 600; margin-bottom: 3px; }
+        .conn-meta { font-size: 12px; color: var(--text-muted); }
+        .conn-db-icon { width: 36px; height: 36px; background: var(--accent-light); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+        .conn-detail { display: flex; flex-direction: column; gap: 5px; margin-bottom: 14px; }
+        .conn-row { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-muted); }
+        .conn-row span:last-child { color: var(--text-dim); font-family: var(--mono); }
+        .conn-actions { display: flex; gap: 8px; }
+        .add-conn-card {
+          background: transparent;
+          border: 1px dashed var(--border-strong);
+          border-radius: var(--radius);
+          padding: 18px;
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          gap: 8px;
+          cursor: pointer;
+          color: var(--text-muted);
+          transition: all 0.15s;
+          min-height: 170px;
+        }
+        .add-conn-card:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+        .add-conn-icon { font-size: 24px; }
+
+        /* ─── HISTORY ─── */
+        .history-table { width: 100%; border-collapse: collapse; }
+        .history-table th {
+          text-align: left;
+          font-size: 11px;
+          font-weight: 600;
+          letter-spacing: 0.5px;
+          text-transform: uppercase;
+          color: var(--text-muted);
+          padding: 0 14px 12px;
+          border-bottom: 1px solid var(--border);
+        }
+        .history-table td {
+          padding: 13px 14px;
+          border-bottom: 1px solid var(--border);
+          font-size: 13px;
+          vertical-align: middle;
+        }
+        .history-table tr:last-child td { border-bottom: none; }
+        .history-table tr:hover td { background: var(--bg-card2); }
+        .query-preview { font-family: var(--mono); font-size: 12px; color: #a5f3fc; max-width: 280px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .score-pill { display: inline-flex; align-items: center; justify-content: center; width: 42px; height: 24px; border-radius: 12px; font-size: 12px; font-weight: 600; }
+
+        /* ─── MODAL ─── */
+        .modal-backdrop {
+          position: fixed; inset: 0;
+          background: rgba(0,0,0,0.7);
+          display: none;
+          align-items: center;
+          justify-content: center;
+          z-index: 1000;
+          padding: 20px;
+        }
+        .modal-backdrop.open { display: flex; }
+        .modal {
+          background: var(--bg-card);
+          border: 1px solid var(--border-strong);
+          border-radius: 14px;
+          padding: 28px;
+          width: 100%;
+          max-width: 480px;
+          position: relative;
+        }
+        .modal-title { font-size: 18px; font-weight: 600; margin-bottom: 20px; letter-spacing: -0.2px; }
+        .modal-close { position: absolute; top: 18px; right: 18px; background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 18px; line-height: 1; }
+        .modal-close:hover { color: var(--text); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 24px; }
+
+        /* ─── LOADER ─── */
+        .spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.2); border-top-color: #fff; border-radius: 50%; animation: spin 0.6s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ─── TOAST ─── */
+        .toast-wrap { position: fixed; bottom: 24px; right: 24px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; pointer-events: none; }
+        .toast {
+          background: var(--bg-card2);
+          border: 1px solid var(--border-strong);
+          border-radius: 10px;
+          padding: 12px 16px;
+          font-size: 13px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          animation: slideUp 0.2s ease;
+          pointer-events: all;
+          max-width: 320px;
+        }
+        .toast.success { border-left: 3px solid var(--success); }
+        .toast.error { border-left: 3px solid var(--danger); }
+        .toast.info { border-left: 3px solid var(--accent); }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ─── UTILITIES ─── */
+        .flex { display: flex; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-8 { gap: 8px; }
+        .gap-12 { gap: 12px; }
+        .mt-16 { margin-top: 16px; }
+        .mt-20 { margin-top: 20px; }
+        .hidden { display: none !important; }
+        .text-muted { color: var(--text-muted); }
+        .text-sm { font-size: 12px; }
+        .divider { height: 1px; background: var(--border); margin: 20px 0; }
+        .loading-overlay { display: flex; align-items: center; justify-content: center; padding: 40px; }
+
+        @media (max-width: 900px) {
+          .stats-grid { grid-template-columns: repeat(2, 1fr); }
+          .analyzer-grid { grid-template-columns: 1fr; }
+        }
+        @media (max-width: 640px) {
+          .sidebar { transform: translateX(-100%); }
+          .main { margin-left: 0; }
+          .stats-grid { grid-template-columns: 1fr 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ═══════════════════════ AUTH PAGES ═══════════════════════ -->
+<div id="auth-pages">
+    <!-- Login -->
+    <div id="login-page" class="auth-wrap">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="auth-logo-icon">🔍</div>
+                <span>DBInsight</span>
+            </div>
+            <h1 class="auth-title">Welcome back</h1>
+            <p class="auth-sub">Sign in to your account to continue</p>
+            <div id="login-error" class="alert alert-danger hidden"></div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="login-email" class="form-input" placeholder="you@example.com" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="login-password" class="form-input" placeholder="••••••••" />
+            </div>
+            <button class="btn btn-primary" id="login-btn" onclick="doLogin()">
+                <span id="login-btn-text">Sign in</span>
+            </button>
+            <div class="auth-switch">
+                Don't have an account? <a onclick="showRegister()">Create one</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Register -->
+    <div id="register-page" class="auth-wrap hidden">
+        <div class="auth-card">
+            <div class="auth-logo">
+                <div class="auth-logo-icon">🔍</div>
+                <span>DBInsight</span>
+            </div>
+            <h1 class="auth-title">Create account</h1>
+            <p class="auth-sub">Start analyzing your SQL queries with AI</p>
+            <div id="register-error" class="alert alert-danger hidden"></div>
+            <div id="register-success" class="alert alert-success hidden"></div>
+            <div class="form-group">
+                <label class="form-label">Full name</label>
+                <input type="text" id="reg-name" class="form-input" placeholder="John Doe" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Email</label>
+                <input type="email" id="reg-email" class="form-input" placeholder="you@example.com" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="reg-password" class="form-input" placeholder="Min. 8 characters" />
+            </div>
+            <button class="btn btn-primary" id="reg-btn" onclick="doRegister()">
+                <span id="reg-btn-text">Create account</span>
+            </button>
+            <div class="auth-switch">
+                Already have an account? <a onclick="showLogin()">Sign in</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ APP SHELL ═══════════════════════ -->
+<div id="app" class="app hidden">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-logo">
+            <div class="sidebar-logo-icon">🔍</div>
+            <span>DBInsight</span>
+        </div>
+
+        <div class="nav-section-label">Main</div>
+        <a class="nav-item active" data-page="dashboard" onclick="navigateTo('dashboard')">
+            <span class="nav-icon">📊</span> Dashboard
+        </a>
+        <a class="nav-item" data-page="analyzer" onclick="navigateTo('analyzer')">
+            <span class="nav-icon">🔬</span> SQL Analyzer
+        </a>
+        <a class="nav-item" data-page="optimize" onclick="navigateTo('optimize')">
+            <span class="nav-icon">✨</span> AI Optimize
+        </a>
+
+        <div class="nav-section-label" style="margin-top:12px">Data</div>
+        <a class="nav-item" data-page="connections" onclick="navigateTo('connections')">
+            <span class="nav-icon">🔌</span> Connections
+        </a>
+        <a class="nav-item" data-page="history" onclick="navigateTo('history')">
+            <span class="nav-icon">🕐</span> Query History
+        </a>
+
+        <div class="sidebar-bottom">
+            <div class="user-chip">
+                <div class="user-avatar" id="user-avatar-initials">U</div>
+                <div class="user-name" id="sidebar-username">User</div>
+                <button class="logout-btn" onclick="doLogout()" title="Sign out">↩</button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main content -->
+    <main class="main">
+
+        <!-- Dashboard -->
+        <div id="page-dashboard" class="page active">
+            <div class="page-header">
+                <div class="page-title">Dashboard</div>
+                <div class="page-desc">Overview of your SQL analysis activity</div>
+            </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-label">Total queries</div>
+                    <div class="stat-value stat-accent" id="stat-total">—</div>
+                    <div class="stat-sub">queries analyzed</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Avg. score</div>
+                    <div class="stat-value stat-success" id="stat-avg">—</div>
+                    <div class="stat-sub">out of 100</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Unsafe queries</div>
+                    <div class="stat-value stat-danger" id="stat-unsafe">—</div>
+                    <div class="stat-sub">below 60 score</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-label">Connections</div>
+                    <div class="stat-value" id="stat-connections">—</div>
+                    <div class="stat-sub">saved databases</div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="flex items-center justify-between" style="margin-bottom:16px">
+                    <div class="section-title" style="margin:0">Recent queries</div>
+                    <a class="btn btn-ghost btn-sm" onclick="navigateTo('history')">View all →</a>
+                </div>
+                <div id="dashboard-history-content">
+                    <div class="loading-overlay"><span class="spinner"></span></div>
+                </div>
+            </div>
+
+            <div style="margin-top:16px; display:grid; grid-template-columns:1fr 1fr; gap:14px">
+                <div class="card">
+                    <div class="section-title">Quick analyze</div>
+                    <p style="color:var(--text-muted);font-size:13px;margin-bottom:14px">Paste a SQL query and get instant feedback on performance issues.</p>
+                    <button class="btn btn-primary" onclick="navigateTo('analyzer')" style="width:auto;padding:9px 20px">Open SQL Analyzer →</button>
+                </div>
+                <div class="card">
+                    <div class="section-title">AI Optimization</div>
+                    <p style="color:var(--text-muted);font-size:13px;margin-bottom:14px">Let Gemini AI rewrite your query for maximum performance.</p>
+                    <button class="btn btn-ghost" onclick="navigateTo('optimize')" style="width:auto">Try AI Optimize →</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- SQL Analyzer -->
+        <!-- BUG 2 FIX: connection banner moved here, into the Analyzer page (above the SQL editor) -->
+        <div id="page-analyzer" class="page">
+            <div class="page-header">
+                <div class="page-title">SQL Analyzer</div>
+                <div class="page-desc">Detect issues and get optimization suggestions for your queries</div>
+            </div>
+
+            <!-- Active connection banner — hidden until a connection is opened -->
+            <div id="conn-banner" class="conn-banner hidden">
+                <div class="conn-banner-dot"></div>
+                <span>Connected to: <strong id="current-db-name">—</strong></span>
+                <button class="btn btn-ghost btn-sm" style="margin-left:auto" onclick="executeSQL()">▶ Run Query</button>
+            </div>
+
+            <div class="analyzer-grid">
+                <div>
+                    <div class="card">
+                        <div class="section-title">Your query</div>
+                        <textarea class="sql-editor" id="analyzer-sql" placeholder="SELECT * FROM users WHERE email = 'admin@example.com'"></textarea>
+                        <div class="action-row">
+                            <button class="btn btn-primary" style="width:auto" onclick="analyzeQuery()">
+                                <span id="analyze-btn-text">Analyze query</span>
+                            </button>
+                            <button class="btn btn-ghost btn-sm" onclick="clearAnalyzer()">Clear</button>
+                        </div>
+                    </div>
+                    <div class="card mt-16">
+                        <div class="section-title">Sample queries</div>
+                        <div style="display:flex;flex-direction:column;gap:6px">
+                            <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;text-align:left;font-family:var(--mono);font-size:11px;color:var(--text-muted)" onclick="loadSample(0)">SELECT * FROM orders JOIN customers...</button>
+                            <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;text-align:left;font-family:var(--mono);font-size:11px;color:var(--text-muted)" onclick="loadSample(1)">DELETE FROM sessions</button>
+                            <button class="btn btn-ghost btn-sm" style="justify-content:flex-start;text-align:left;font-family:var(--mono);font-size:11px;color:var(--text-muted)" onclick="loadSample(2)">SELECT id, name FROM products WHERE...</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card result-panel" id="analyzer-result-panel">
+                        <div class="empty-state">
+                            <div class="empty-icon">🔬</div>
+                            <div class="empty-title">No analysis yet</div>
+                            <div class="empty-sub">Paste a SQL query and click Analyze</div>
+                        </div>
+                    </div>
+
+                    <!-- Execute SQL results panel — shown after Run Query -->
+                    <div class="card mt-16 hidden" id="execute-result-panel">
+                        <div class="flex items-center justify-between" style="margin-bottom:12px">
+                            <div class="section-title" style="margin:0">Query results</div>
+                            <span id="execute-row-count" class="badge badge-neutral"></span>
+                        </div>
+                        <div id="execute-result-content" class="execute-result">
+                            <div class="loading-overlay"><span class="spinner"></span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Optimize -->
+        <div id="page-optimize" class="page">
+            <div class="page-header">
+                <div class="page-title">AI Optimization</div>
+                <div class="page-desc">Powered by Gemini 2.5 Flash — get AI-rewritten, performant SQL</div>
+            </div>
+
+            <div class="analyzer-grid">
+                <div class="card">
+                    <div class="section-title">Original query</div>
+                    <textarea class="sql-editor" id="optimize-sql" placeholder="SELECT * FROM orders o JOIN customers c ON o.customer_id = c.id WHERE c.country = 'IN'"></textarea>
+                    <div class="action-row">
+                        <button class="btn btn-primary" style="width:auto" onclick="optimizeQuery()">
+                            <span id="optimize-btn-text">✨ Optimize with AI</span>
+                        </button>
+                        <button class="btn btn-ghost btn-sm" onclick="clearOptimizer()">Clear</button>
+                    </div>
+                </div>
+
+                <div>
+                    <div class="card" id="optimize-result-panel">
+                        <div class="empty-state">
+                            <div class="empty-icon">✨</div>
+                            <div class="empty-title">Ready to optimize</div>
+                            <div class="empty-sub">Gemini AI will rewrite your query and explain the changes</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Connections -->
+        <div id="page-connections" class="page">
+            <div class="page-header flex items-center justify-between">
+                <div>
+                    <div class="page-title">Database connections</div>
+                    <div class="page-desc">Manage your saved PostgreSQL connections</div>
+                </div>
+                <button class="btn btn-primary" style="width:auto" onclick="openAddModal()">+ Add connection</button>
+            </div>
+            <div class="conn-grid" id="connections-grid">
+                <div class="loading-overlay"><span class="spinner"></span></div>
+            </div>
+        </div>
+
+        <!-- History -->
+        <div id="page-history" class="page">
+            <div class="page-header">
+                <div class="page-title">Query history</div>
+                <div class="page-desc">All queries you've analyzed, with scores and issues</div>
+            </div>
+            <div class="card" style="padding:0;overflow:hidden">
+                <div id="history-content" style="padding:20px">
+                    <div class="loading-overlay"><span class="spinner"></span></div>
+                </div>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<!-- ═══════════════════════ ADD CONNECTION MODAL ═══════════════════════ -->
+<div class="modal-backdrop" id="add-modal">
+    <div class="modal">
+        <button class="modal-close" onclick="closeAddModal()">✕</button>
+        <div class="modal-title">Add connection</div>
+        <div id="modal-error" class="alert alert-danger hidden"></div>
+        <div class="form-group">
+            <label class="form-label">Connection name</label>
+            <input type="text" id="conn-name" class="form-input" placeholder="My Production DB" />
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Host</label>
+                <input type="text" id="conn-host" class="form-input" placeholder="localhost" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Port</label>
+                <input type="number" id="conn-port" class="form-input" placeholder="5432" value="5432" />
+            </div>
+        </div>
+        <div class="form-group">
+            <label class="form-label">Database name</label>
+            <input type="text" id="conn-db" class="form-input" placeholder="myapp_production" />
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label">Username</label>
+                <input type="text" id="conn-user" class="form-input" placeholder="postgres" />
+            </div>
+            <div class="form-group">
+                <label class="form-label">Password</label>
+                <input type="password" id="conn-pass" class="form-input" placeholder="••••••••" />
+            </div>
+        </div>
+        <div class="modal-actions">
+            <button class="btn btn-ghost" onclick="closeAddModal()">Cancel</button>
+            <button class="btn btn-primary" style="width:auto" onclick="saveConnection()">
+                <span id="save-conn-text">Save connection</span>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════════════ TOAST CONTAINER ═══════════════════════ -->
+<div class="toast-wrap" id="toast-wrap"></div>
+
+<script>
+    const API = 'http://localhost:8080';
+    let token = localStorage.getItem('dbinsight_token');
+    let currentUser = JSON.parse(localStorage.getItem('dbinsight_user') || 'null');
+
+    // BUG 4 FIX: moved inside <script> tag (were outside before)
+    let activeConnectionId = null;
+    let activeConnectionName = "";
+
+    const SAMPLE_QUERIES = [
+      `SELECT * FROM orders o\nJOIN customers c ON o.customer_id = c.id\nJOIN products p ON o.product_id = p.id\nJOIN categories cat ON p.category_id = cat.id`,
+      `DELETE FROM sessions`,
+      `SELECT id, name, price FROM products\nWHERE category = 'electronics'\nORDER BY price DESC\nLIMIT 20`
+    ];
+
+    // ─── INIT ───
+    function init() {
+      if (token && currentUser) {
+        showApp();
+      } else {
+        showAuth();
+      }
+      document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+      document.getElementById('reg-password').addEventListener('keydown', e => { if (e.key === 'Enter') doRegister(); });
+    }
+
+    function showAuth() {
+      document.getElementById('auth-pages').classList.remove('hidden');
+      document.getElementById('app').classList.add('hidden');
+    }
+
+    function showApp() {
+      document.getElementById('auth-pages').classList.add('hidden');
+      document.getElementById('app').classList.remove('hidden');
+      if (currentUser) {
+        // BUG 5 FIX: removed duplicate element updates — set each element exactly once
+        const name = currentUser.email || 'User';
+        document.getElementById('sidebar-username').textContent = name;
+        document.getElementById('user-avatar-initials').textContent = name.charAt(0).toUpperCase();
+      }
+      loadDashboard();
+    }
+
+    // ─── AUTH ───
+    function showLogin() {
+      document.getElementById('login-page').classList.remove('hidden');
+      document.getElementById('register-page').classList.add('hidden');
+    }
+
+    function showRegister() {
+      document.getElementById('login-page').classList.add('hidden');
+      document.getElementById('register-page').classList.remove('hidden');
+    }
+
+    async function doLogin() {
+      const email = document.getElementById('login-email').value.trim();
+      const password = document.getElementById('login-password').value;
+      const errEl = document.getElementById('login-error');
+      const btn = document.getElementById('login-btn');
+      const btnText = document.getElementById('login-btn-text');
+      errEl.classList.add('hidden');
+      if (!email || !password) { showErr(errEl, 'Please fill in all fields.'); return; }
+      btnText.innerHTML = '<span class="spinner"></span> Signing in…';
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API}/api/auth/login`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ email, password })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Login failed');
+        token = data.data.token;
+        currentUser = { email: data.data.email, role: data.data.role };
+        localStorage.setItem('dbinsight_token', token);
+        localStorage.setItem('dbinsight_user', JSON.stringify(currentUser));
+        showApp();
+      } catch (e) {
+        showErr(errEl, e.message);
+      } finally {
+        btnText.textContent = 'Sign in';
+        btn.disabled = false;
+      }
+    }
+
+    async function doRegister() {
+      const fullName = document.getElementById('reg-name').value.trim();
+      const email = document.getElementById('reg-email').value.trim();
+      const password = document.getElementById('reg-password').value;
+      const errEl = document.getElementById('register-error');
+      const succEl = document.getElementById('register-success');
+      const btn = document.getElementById('reg-btn');
+      const btnText = document.getElementById('reg-btn-text');
+      errEl.classList.add('hidden');
+      succEl.classList.add('hidden');
+      if (!fullName || !email || !password) { showErr(errEl, 'Please fill in all fields.'); return; }
+      btnText.innerHTML = '<span class="spinner"></span> Creating account…';
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${API}/api/auth/register`, {
+          method: 'POST',
+          headers: {'Content-Type': 'application/json'},
+          body: JSON.stringify({ fullName, email, password })
+        });
+        const data = await res.json();
+        if (!res.ok || !data.success) throw new Error(data.message || 'Registration failed');
+        succEl.textContent = 'Account created! Signing you in…';
+        succEl.classList.remove('hidden');
+        document.getElementById('login-email').value = email;
+        document.getElementById('login-password').value = password;
+        setTimeout(() => { showLogin(); doLogin(); }, 1000);
+      } catch (e) {
+        showErr(errEl, e.message);
+      } finally {
+        btnText.textContent = 'Create account';
+        btn.disabled = false;
+      }
+    }
+
+    function doLogout() {
+      token = null;
+      currentUser = null;
+      // BUG 6 FIX: clear active connection state on logout
+      activeConnectionId = null;
+      activeConnectionName = "";
+      localStorage.removeItem('dbinsight_token');
+      localStorage.removeItem('dbinsight_user');
+      showAuth();
+      showLogin();
+    }
+
+    // ─── NAVIGATION ───
+    function navigateTo(page) {
+      document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+      document.getElementById('page-' + page).classList.add('active');
+      document.querySelector(`[data-page="${page}"]`)?.classList.add('active');
+      if (page === 'dashboard') loadDashboard();
+      if (page === 'connections') loadConnections();
+      if (page === 'history') loadHistory();
+    }
+
+    // ─── API HELPER ───
+    async function api(path, opts = {}) {
+      const headers = { 'Content-Type': 'application/json', ...(opts.headers || {}) };
+      if (token) headers['Authorization'] = 'Bearer ' + token;
+      const res = await fetch(API + path, { ...opts, headers });
+      if (res.status === 401) { doLogout(); throw new Error('Session expired. Please sign in again.'); }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.message || 'Request failed');
+      return data;
+    }
+
+    // ─── DASHBOARD ───
+    async function loadDashboard() {
+      try {
+        const [histRes, connRes] = await Promise.all([
+          api('/api/history'),
+          api('/api/connections')
+        ]);
+        const history = histRes.data || [];
+        const connections = connRes.data || [];
+
+        const total = history.length;
+        const avg = total ? Math.round(history.reduce((s, h) => s + (h.score || 0), 0) / total) : 0;
+        const unsafe = history.filter(h => (h.score || 100) < 60).length;
+
+        document.getElementById('stat-total').textContent = total;
+        document.getElementById('stat-avg').textContent = total ? avg : '—';
+        document.getElementById('stat-unsafe').textContent = unsafe;
+        document.getElementById('stat-connections').textContent = connections.length;
+
+        const recent = history.slice(0, 5);
+        const histEl = document.getElementById('dashboard-history-content');
+        if (!recent.length) {
+          histEl.innerHTML = `<div class="empty-state" style="min-height:80px"><div class="empty-sub">No queries analyzed yet. Head to SQL Analyzer to get started.</div></div>`;
+          return;
+        }
+        histEl.innerHTML = `<table class="history-table">
+          <thead><tr><th>Query</th><th>Type</th><th>Score</th><th>Date</th></tr></thead>
+          <tbody>${recent.map(h => renderHistoryRow(h)).join('')}</tbody>
+        </table>`;
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    }
+
+    // ─── SQL ANALYZER ───
+    function loadSample(i) { document.getElementById('analyzer-sql').value = SAMPLE_QUERIES[i]; }
+
+    function clearAnalyzer() {
+      document.getElementById('analyzer-sql').value = '';
+      document.getElementById('analyzer-result-panel').innerHTML = `<div class="empty-state"><div class="empty-icon">🔬</div><div class="empty-title">No analysis yet</div><div class="empty-sub">Paste a SQL query and click Analyze</div></div>`;
+      document.getElementById('execute-result-panel').classList.add('hidden');
+    }
+
+    async function analyzeQuery() {
+      const sql = document.getElementById('analyzer-sql').value.trim();
+      if (!sql) { toast('Paste a SQL query first.', 'error'); return; }
+      const btnText = document.getElementById('analyze-btn-text');
+      btnText.innerHTML = '<span class="spinner"></span> Analyzing…';
+      const panel = document.getElementById('analyzer-result-panel');
+      panel.innerHTML = '<div class="loading-overlay"><span class="spinner"></span></div>';
+      try {
+        const res = await api('/api/sql/analyze', { method: 'POST', body: JSON.stringify({ sqlQuery: sql }) });
+        const d = res.data;
+        const score = d.score ?? 100;
+        const color = score >= 80 ? '#10b981' : score >= 60 ? '#f59e0b' : '#ef4444';
+        const badgeClass = score >= 80 ? 'badge-success' : score >= 60 ? 'badge-warning' : 'badge-danger';
+        const circumference = 2 * Math.PI * 46;
+        const offset = circumference - (score / 100) * circumference;
+        const issues = (d.issues || []);
+        const suggestions = (d.suggestions || []);
+        panel.innerHTML = `
+          <div class="flex items-center justify-between" style="margin-bottom:14px">
+            <div class="section-title" style="margin:0">Analysis result</div>
+            <div class="flex gap-8 items-center">
+              <span class="badge badge-accent">${d.queryType || 'SQL'}</span>
+              <span class="badge ${d.valid ? 'badge-success' : 'badge-danger'}">${d.valid ? '✓ Valid' : '✗ Invalid'}</span>
+            </div>
+          </div>
+          <div class="score-ring-wrap">
+            <div class="score-ring">
+              <svg width="110" height="110" viewBox="0 0 110 110">
+                <circle cx="55" cy="55" r="46" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="8"/>
+                <circle cx="55" cy="55" r="46" fill="none" stroke="${color}" stroke-width="8"
+                  stroke-dasharray="${circumference}" stroke-dashoffset="${offset}"
+                  stroke-linecap="round" style="transition:stroke-dashoffset 0.6s ease"/>
+              </svg>
+              <div class="score-ring-val">
+                <div class="score-ring-num" style="color:${color}">${score}</div>
+                <div class="score-ring-label">Score</div>
+              </div>
+            </div>
+          </div>
+          ${issues.length ? `
+          <div class="divider"></div>
+          <div class="section-title">Issues found</div>
+          <ul class="issue-list">
+            ${issues.map((issue, i) => `
+              <li class="issue-item">
+                <div class="issue-dot" style="background:${score < 60 ? 'var(--danger)' : 'var(--warning)'}"></div>
+                <div>
+                  <div class="issue-text">${issue}</div>
+                  ${suggestions[i] ? `<div class="suggestion-text">💡 ${suggestions[i]}</div>` : ''}
+                </div>
+              </li>`).join('')}
+          </ul>` : `<p style="color:var(--success);font-size:13px;text-align:center;padding:10px 0">✓ No issues detected — your query looks clean!</p>`}
+          <div class="divider"></div>
+          <div class="action-row">
+            <button class="btn btn-ghost btn-sm" onclick="sendToOptimizer(\`${sql.replace(/`/g, '\\`')}\`)">✨ Optimize with AI →</button>
+          </div>`;
+      } catch (e) {
+        panel.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Analysis failed</div><div class="empty-sub">${e.message}</div></div>`;
+        toast(e.message, 'error');
+      } finally {
+        btnText.textContent = 'Analyze query';
+      }
+    }
+
+    function sendToOptimizer(sql) {
+      document.getElementById('optimize-sql').value = sql;
+      navigateTo('optimize');
+    }
+
+    // ─── EXECUTE SQL (new feature) ───
+    async function executeSQL() {
+
+    if (!activeConnectionId) {
+        toast('No active connection. Open a connection first.', 'error');
+        return;
+    }
+
+    const sql = document.getElementById('analyzer-sql').value.trim();
+
+    if (!sql) {
+        toast('Write a SQL query to run.', 'error');
+        return;
+    }
+
+    const panel = document.getElementById('execute-result-panel');
+    const content = document.getElementById('execute-result-content');
+    const rowCountEl = document.getElementById('execute-row-count');
+
+    panel.classList.remove('hidden');
+
+    content.innerHTML = `
+        <div class="loading-overlay">
+            <span class="spinner"></span>
+            <span style="margin-left:10px;color:var(--text-muted)">
+                Running query...
+            </span>
+        </div>
+    `;
+
+    rowCountEl.textContent = '';
+
+    try {
+
+        const response = await api('/api/connections/execute', {
+            method: 'POST',
+            body: JSON.stringify({
+                connectionId: activeConnectionId,
+                sql: sql
+            })
+        });
+
+        const data = response.data;
+
+        /* -----------------------------
+           INSERT / UPDATE / DELETE
+        ------------------------------*/
+
+        if (data.affectedRows !== null && data.affectedRows !== undefined) {
+
+            rowCountEl.textContent =
+                `${data.affectedRows} row(s) affected`;
+
+            content.innerHTML = `
+                <div class="empty-state" style="min-height:80px">
+                    <div class="empty-icon">✅</div>
+                    <div class="empty-sub">
+                        Query executed successfully.<br><br>
+                        <strong>${data.affectedRows}</strong> row(s) affected.
+                    </div>
+                </div>
+            `;
+
+            toast('Query executed successfully', 'success');
+            return;
+        }
+
+        /* -----------------------------
+           SELECT
+        ------------------------------*/
+
+        const rows = data.rows || [];
+
+        if (rows.length === 0) {
+
+            rowCountEl.textContent = '0 rows';
+
+            content.innerHTML = `
+                <div class="empty-state" style="min-height:80px">
+                    <div class="empty-icon">📄</div>
+                    <div class="empty-sub">
+                        Query executed successfully.<br><br>
+                        No rows returned.
+                    </div>
+                </div>
+            `;
+
+            return;
+        }
+
+        const columns = Object.keys(rows[0]);
+
+        rowCountEl.textContent =
+            `${rows.length} row${rows.length !== 1 ? 's' : ''}`;
+
+        content.innerHTML = `
+            <table class="execute-table">
+
+                <thead>
+                    <tr>
+                        ${columns.map(col =>
+                            `<th>${escHtml(col)}</th>`
+                        ).join('')}
+                    </tr>
+                </thead>
+
+                <tbody>
+
+                    ${rows.map(row => `
+                        <tr>
+                            ${columns.map(col => `
+                                <td>${escHtml(String(row[col] ?? ''))}</td>
+                            `).join('')}
+                        </tr>
+                    `).join('')}
+
+                </tbody>
+
+            </table>
+        `;
+
+        toast('Query executed successfully', 'success');
+
+    }
+    catch (e) {
+
+        rowCountEl.textContent = '';
+
+        content.innerHTML = `
+            <div class="empty-state" style="min-height:80px">
+                <div class="empty-icon">❌</div>
+                <div class="empty-sub">
+                    ${escHtml(e.message)}
+                </div>
+            </div>
+        `;
+
+        toast(e.message, 'error');
+    }
+}
+
+    // ─── AI OPTIMIZE ───
+    function clearOptimizer() {
+      document.getElementById('optimize-sql').value = '';
+      document.getElementById('optimize-result-panel').innerHTML = `<div class="empty-state"><div class="empty-icon">✨</div><div class="empty-title">Ready to optimize</div><div class="empty-sub">Gemini AI will rewrite your query and explain the changes</div></div>`;
+    }
+
+    async function optimizeQuery() {
+      const sql = document.getElementById('optimize-sql').value.trim();
+      if (!sql) { toast('Paste a SQL query first.', 'error'); return; }
+      const btnText = document.getElementById('optimize-btn-text');
+      btnText.innerHTML = '<span class="spinner"></span> Optimizing…';
+      const panel = document.getElementById('optimize-result-panel');
+      panel.innerHTML = '<div class="loading-overlay"><span class="spinner"></span><span style="margin-left:10px;color:var(--text-muted)">Gemini is thinking…</span></div>';
+      try {
+        const res = await api('/api/ai/optimize', { method: 'POST', body: JSON.stringify({ sqlQuery: sql }) });
+        const d = res.data;
+        let optimizedSql = d.optimizedQuery || '';
+        let explanation = d.explanation || '';
+        let indexSuggestions = [];
+        let performanceScore = null;
+
+        try {
+          const cleaned = optimizedSql.replace(/```json|```/g, '').trim();
+          if (cleaned.startsWith('{')) {
+            const parsed = JSON.parse(cleaned);
+            optimizedSql = parsed.optimizedQuery || optimizedSql;
+            explanation = parsed.explanation || explanation;
+            indexSuggestions = parsed.indexSuggestions || [];
+            performanceScore = parsed.performanceScore;
+          }
+        } catch (_) {}
+
+        panel.innerHTML = `
+          <div class="flex items-center justify-between" style="margin-bottom:14px">
+            <div class="section-title" style="margin:0">Optimized query</div>
+            ${performanceScore != null ? `<span class="badge badge-success">Score: ${performanceScore}</span>` : ''}
+          </div>
+          <div class="optimize-result">${escHtml(optimizedSql)}</div>
+          <button class="btn btn-ghost btn-sm" style="margin-top:8px" onclick="copyToClipboard(\`${optimizedSql.replace(/`/g, '\\`')}\`)">📋 Copy query</button>
+          ${explanation ? `
+          <div class="divider"></div>
+          <div class="section-title">Explanation</div>
+          <div class="explanation-box">${escHtml(explanation)}</div>` : ''}
+          ${indexSuggestions.length ? `
+          <div class="divider"></div>
+          <div class="section-title">Index suggestions</div>
+          <ul class="issue-list">
+            ${indexSuggestions.map(s => `<li class="issue-item"><div class="issue-dot" style="background:var(--accent)"></div><div class="issue-text">${escHtml(s)}</div></li>`).join('')}
+          </ul>` : ''}`;
+      } catch (e) {
+        panel.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">Optimization failed</div><div class="empty-sub">${e.message}</div></div>`;
+        toast(e.message, 'error');
+      } finally {
+        btnText.textContent = '✨ Optimize with AI';
+      }
+    }
+
+    // ─── CONNECTIONS ───
+    async function loadConnections() {
+      const grid = document.getElementById('connections-grid');
+      grid.innerHTML = '<div class="loading-overlay"><span class="spinner"></span></div>';
+      try {
+        const res = await api('/api/connections');
+        const conns = res.data || [];
+        // BUG 3 FIX: removed stray `<` after the Test button's closing </button>
+        let html = conns.map(c => `
+          <div class="conn-card">
+            <div class="conn-card-header">
+              <div>
+                <div class="conn-name">${escHtml(c.connectionName)}</div>
+                <div class="conn-meta">Added ${formatDate(c.createdAt)}</div>
+              </div>
+              <div class="conn-db-icon">🐘</div>
+            </div>
+            <div class="conn-detail">
+              <div class="conn-row"><span>Host</span><span>${escHtml(c.host)}:${c.port}</span></div>
+              <div class="conn-row"><span>Database</span><span>${escHtml(c.databaseName)}</span></div>
+              <div class="conn-row"><span>User</span><span>${escHtml(c.username)}</span></div>
+            </div>
+            <div class="conn-actions">
+              <button class="btn btn-primary btn-sm" onclick="openConnection(${c.id}, '${escHtml(c.connectionName)}')">📂 Open</button>
+              <button class="btn btn-danger-ghost btn-sm" onclick="deleteConnection(${c.id}, '${escHtml(c.connectionName)}')">🗑 Delete</button>
+            </div>
+          </div>`).join('');
+        html += `<div class="add-conn-card" onclick="openAddModal()">
+          <div class="add-conn-icon">+</div>
+          <div style="font-size:13px;font-weight:500">Add connection</div>
+          <div style="font-size:12px">Save a new PostgreSQL database</div>
+        </div>`;
+        grid.innerHTML = html;
+      } catch (e) {
+        grid.innerHTML = `<div class="empty-state" style="padding:40px"><div class="empty-icon">⚠️</div><div class="empty-title">${e.message}</div></div>`;
+      }
+    }
+
+    async function saveConnection() {
+      const name = document.getElementById('conn-name').value.trim();
+      const host = document.getElementById('conn-host').value.trim();
+      const port = parseInt(document.getElementById('conn-port').value);
+      const databaseName = document.getElementById('conn-db').value.trim();
+      const username = document.getElementById('conn-user').value.trim();
+      const password = document.getElementById('conn-pass').value;
+      const errEl = document.getElementById('modal-error');
+      const btnText = document.getElementById('save-conn-text');
+      errEl.classList.add('hidden');
+      if (!name || !host || !port || !databaseName || !username || !password) {
+        showErr(errEl, 'Please fill in all fields.'); return;
+      }
+      btnText.innerHTML = '<span class="spinner"></span> Saving…';
+      try {
+        await api('/api/connections', { method: 'POST', body: JSON.stringify({ connectionName: name, host, port, databaseName, username, password }) });
+        closeAddModal();
+        toast('Connection saved!', 'success');
+        loadConnections();
+        // BUG 7 FIX: refresh dashboard so connection count updates immediately
+        await loadDashboard();
+      } catch (e) {
+        showErr(errEl, e.message);
+      } finally {
+        btnText.textContent = 'Save connection';
+      }
+    }
+
+    async function deleteConnection(id, name) {
+      if (!confirm(`Delete connection "${name}"?`)) return;
+      try {
+        await api('/api/connections/' + id, { method: 'DELETE' });
+        // If the deleted connection was the active one, clear it
+        if (activeConnectionId === id) {
+          activeConnectionId = null;
+          activeConnectionName = "";
+          document.getElementById('conn-banner').classList.add('hidden');
+        }
+        toast('Connection deleted.', 'success');
+        loadConnections();
+        await loadDashboard();
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    }
+
+    function openAddModal() {
+      document.getElementById('add-modal').classList.add('open');
+      document.getElementById('modal-error').classList.add('hidden');
+    }
+    function closeAddModal() {
+      document.getElementById('add-modal').classList.remove('open');
+      ['conn-name','conn-host','conn-db','conn-user','conn-pass'].forEach(id => document.getElementById(id).value = '');
+      document.getElementById('conn-port').value = '5432';
+    }
+    document.getElementById('add-modal').addEventListener('click', function(e) { if (e.target === this) closeAddModal(); });
+
+    async function testConnection(id) {
+      try {
+        const res = await api('/api/connections/' + id + '/test', { method: 'POST' });
+        toast(res.message, 'success');
+      } catch (e) {
+        toast(e.message, 'error');
+      }
+    }
+
+    // BUG 1 FIX: replaced non-existent showPage() with navigateTo()
+    // BUG 2 FIX: connection banner now lives in Analyzer page, updated via DOM here
+    function openConnection(id, name) {
+      activeConnectionId = id;
+      activeConnectionName = name;
+      navigateTo('analyzer');
+      // Show the connection banner in the Analyzer page
+      const banner = document.getElementById('conn-banner');
+      document.getElementById('current-db-name').textContent = name;
+      banner.classList.remove('hidden');
+      toast('Opened ' + name, 'success');
+    }
+
+    // ─── HISTORY ───
+    async function loadHistory() {
+      const el = document.getElementById('history-content');
+      el.innerHTML = '<div class="loading-overlay"><span class="spinner"></span></div>';
+      try {
+        const res = await api('/api/history');
+        const history = res.data || [];
+        if (!history.length) {
+          el.innerHTML = `<div class="empty-state"><div class="empty-icon">🕐</div><div class="empty-title">No history yet</div><div class="empty-sub">Analyzed queries will appear here.</div></div>`;
+          return;
+        }
+        el.innerHTML = `<table class="history-table">
+          <thead><tr><th>Query</th><th>Type</th><th>Score</th><th>Issues</th><th>Date</th></tr></thead>
+          <tbody>${history.map(h => renderHistoryRow(h, true)).join('')}</tbody>
+        </table>`;
+      } catch (e) {
+        el.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><div class="empty-title">${e.message}</div></div>`;
+      }
+    }
+
+    function renderHistoryRow(h, showIssues = false) {
+      const score = h.score ?? 100;
+      const color = score >= 80 ? 'var(--success)' : score >= 60 ? 'var(--warning)' : 'var(--danger)';
+      return `<tr>
+        <td><div class="query-preview" title="${escHtml(h.originalQuery)}">${escHtml(h.originalQuery || '')}</div></td>
+        <td><span class="badge badge-accent">${h.queryType || '—'}</span></td>
+        <td><span class="score-pill" style="background:${color}22;color:${color}">${score}</span></td>
+        ${showIssues ? `<td style="max-width:200px;font-size:12px;color:var(--text-muted)">${h.issues || '—'}</td>` : ''}
+        <td style="color:var(--text-muted);font-size:12px;white-space:nowrap">${formatDate(h.createdAt)}</td>
+      </tr>`;
+    }
+
+    // ─── UTILS ───
+    function showErr(el, msg) { el.textContent = msg; el.classList.remove('hidden'); }
+    function escHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+    function formatDate(d) {
+      if (!d) return '—';
+      const date = new Date(d);
+      if (isNaN(date.getTime())) return d.substring(0, 19).replace('T', ' ');
+      return date.toLocaleString();
+    }
+    function copyToClipboard(text) {
+      navigator.clipboard?.writeText(text).then(() => toast('Copied to clipboard!', 'success')).catch(() => toast('Copy failed.', 'error'));
+    }
+    function toast(msg, type = 'info') {
+      const wrap = document.getElementById('toast-wrap');
+      const el = document.createElement('div');
+      el.className = `toast ${type}`;
+      el.textContent = msg;
+      wrap.appendChild(el);
+      setTimeout(() => el.remove(), 3500);
+    }
+
+    init();
+</script>
+</body>
+</html>
